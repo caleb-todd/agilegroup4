@@ -1,7 +1,20 @@
 #include <iostream>
 
 using namespace std;
+bool doesuserexist(string username){
+    return false;
+}
+void createaccount(string username, string password){
 
+}
+int validatelogin(string username, string password){
+
+    //return user id, -1 if incorrect login details
+    return 1;
+}
+void displaydashboard(int userid){
+    //display dashboard
+}
 int main() {
     while(1){
         cout << "Please select an option:" << endl;
@@ -21,6 +34,7 @@ int main() {
                 string username;
                 cin >> username;
                 //do logic to check if a user has already claimed this username
+                usernamealreadyexists = doesuserexist(username);
                 if(usernamealreadyexists == false){
                         cout << "Please enter a password:";
                         string password;
@@ -30,6 +44,7 @@ int main() {
                         cin >> password2;
                         if(password == password2){
                             //create account
+                            createaccount(username, password);
                             accountcreated = true;
                         }else{
                             cout << "Passwords do not match.. please try again." << endl;
@@ -39,6 +54,7 @@ int main() {
                 }
             }
             cout << "Account created!" << endl;
+            
         }
         if(x == 2){
             bool successfullogin = false;
@@ -51,10 +67,18 @@ int main() {
                 string password;
                 cin >> password;
                 //do logic check to see if login is correct
-                successfullogin = true;
+                int userid = validatelogin(username, password);
+                if(userid == -1){
+                    successfullogin = false;
+                }else{
+                    successfullogin = true;
+                }
+                //successfullogin = true;
                 cout << username << " : " << password << endl;
                 cout << "Successfully logged in!" << endl;
                 //do logic to go to main dashboard
+                displaydashboard(userid);
+
             }
         }
         if(x == 3){
