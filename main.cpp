@@ -1,19 +1,127 @@
 #include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <filesystem>
+#include <functional>
+#include <sstream>
+#include <iomanip>
+#include <random>
 
 using namespace std;
-bool doesuserexist(string username){
+namespace fs = filesystem;
+
+void ensure_data_directory(){
+    if(fs::exists("user_data")){
+        fs::create_directory("user_data");
+    }
+}
+
+string hash_password(const string& password){
+    hash<string> hasher;
+    size_t hash = hasher(password);
+
+    stringstream ss;
+    ss << hex << hash;
+    return ss.str();
+}
+int generate_user_id(){
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> dis(100000, 999999);
+    return dis(gen);
+}
+bool doesuserexist(const string& username){
+    ensure_data_directory();
+    for(const auto& entry : fs::directory_iterator("user_data")){
+        if(entry.is_regular_file()){
+            ifstream file(entry.path());
+            string line;
+
+            if(getline(file, line)){
+                if(line == username){
+                    file.close();
+                    return true;
+                }
+            }
+            file.close();
+        }
+    }
     return false;
 }
 void createaccount(string username, string password){
+    ensure_data_directory();
 
+    int user_id = generate_user_id();
+    while(fs::exists("user_data/" + to_string(user_id) + ".dat")){
+        user_id = generate_user_id();
+    }
+
+    ofstream file("user_data/" + to_string(user_id) + ".dat");
+
+    file << username << "\n";
+    file << hash_password(password) << "\n";
+
+    file << "0.0\n";
+
+    file.close();
 }
-int validatelogin(string username, string password){
+int validatelogin(const string& username, const string& password){
+    ensure_data_directory();
 
+    for(const auto& entry : fs::directory_iterator("user_data")){
+        if(entry.is_regular_file()){
+            ifstream file(entry.path());
+            string stored_username;
+            string stored_password_hash;
+
+            //read username and password hash
+            if(getline(file, stored_username) && getline(file, stored_password_hash)){
+                if(stored_username == username && stored_password_hash == hash_password(password)){
+                    //get userid
+                    string filename = entry.path().filename().string();
+                    filename = filename.substr(0, filename.find('.'));
+                    int user_id = stoi(filename);
+
+                    file.close();
+                    return user_id;
+                }
+            }
+            file.close();
+        }
+    }
     //return user id, -1 if incorrect login details
     return 1;
 }
-void displaydashboard(int userid){
+vector<float> get_user_accounts(int user_id){
+    vector<float> accounts;
+    ifstream file("user_data/" + to_string(user_id) + ".dat");
+    if(!file) return accounts;
+
+    //skip username and password
+    string line;
+    getline(file, line);
+    getline(file, line);
+
+    //read all account balances
+    while(getline(file,line)){
+        accounts.push_back(stof(line));
+    }
+    file.close();
+    return accounts;
+}
+void displaydashboard(int user_id){
     //display dashboard
+    vector<float> accounts = get_user_accounts(user_id);
+
+    cout << endl << "=== ACCOUNT DASHBOARD ===" << endl;
+    cout << "Your user id: " << user_id << endl;
+    cout << "Accounts: " << endl;
+    for(size_t i = 0; i<accounts.size(); ++i){
+        cout << "Account " << (i+1) << ": $" << accounts[i] << endl;
+    }
+
+    cout << "=========================" << endl << endl;
 }
 int main() {
     while(1){
@@ -56,7 +164,7 @@ int main() {
             cout << "Account created!" << endl;
             
         }
-        if(x == 2){
+        else if(x == 2){
             bool successfullogin = false;
             while(successfullogin == false){
                 cout << "Please enter a new username:";
@@ -69,6 +177,7 @@ int main() {
                 //do logic check to see if login is correct
                 int userid = validatelogin(username, password);
                 if(userid == -1){
+                    cout << "Invalid username or password, try again" << endl;
                     successfullogin = false;
                 }else{
                     successfullogin = true;
@@ -81,9 +190,11 @@ int main() {
 
             }
         }
-        if(x == 3){
+        else if(x == 3){
             cout << "Exiting.." << endl;
             return 0;
+        }else{
+            cout << "Invalid option, try again" << endl;
         }
     }
 }
