@@ -177,6 +177,44 @@ void transferFunds(int user_id, int accountToWithdrawFrom, int accountToDepositT
 
     cout << "Transfer complete.\n";
 }
+void calculateInterestForAllAccounts() {
+    ensure_data_directory();
+    cout << "\n=== INTEREST PROFIT CALCULATION ===" << endl;
+    cout << "Enter annual interest rate (in percent): ";
+    float rate;
+    cin >> rate;
+    cout << "Enter period in months: ";
+    int period;
+    cin >> period;
+    
+    float totalInterest = 0.0;
+    float totalPrincipal = 0.0;
+    
+    // Iterate through all user data files
+    for(const auto& entry : fs::directory_iterator("user_data")){
+        if(entry.is_regular_file()){
+            ifstream file(entry.path());
+            string temp;
+            getline(file, temp);
+            getline(file, temp);
+            string line;
+            while(getline(file, line)){
+                try {
+                    float balance = stof(line);
+                    totalPrincipal += balance;
+                    float interest = balance * (rate / 100.0) * (period / 12.0);
+                    totalInterest += interest;
+                } catch(exception& e){
+                    // Ignore if error
+                }
+            }
+            file.close();
+        }
+    }
+    
+    cout << "\nTotal principal across all user accounts: $" << totalPrincipal << endl;
+    cout << "Total interest profit over " << period << " month(s) at " << rate << "% annual rate: $" << totalInterest << "\n" << endl;
+}
 
 void calculateInterestForAllAccounts() {
     ensure_data_directory();
@@ -223,6 +261,7 @@ int main() {
         cout << "1 - Create Account" << endl;
         cout << "2 - Login" << endl;
         //cout << "3 - Move Money between accounts" << endl;
+        cout << "3 - Calculate Interest Profit" << endl;
         cout << "4 - Exit" << endl;
         cout << "5 - Calculate Interest Profit" << endl;
 
@@ -368,6 +407,9 @@ int main() {
                     
                 }
             }
+        }
+        else if(x == 3){
+            calculateInterestForAllAccounts();
         }
         else if(x == 4){
             cout << "Exiting.." << endl;
