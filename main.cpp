@@ -292,7 +292,8 @@ int main() {
                         cout << "1 - Transfer funds" << endl;
                         cout << "2 - Create new checking account" << endl;
                         cout << "3 - Deposit money" << endl;
-                        cout << "4 - Logout" << endl;
+                        cout << "4 - Withdraw money" << endl;
+                        cout << "5 - Logout" << endl;
                         cin >> y;
                         if(y == 1){
                             int account1, account2;
@@ -356,7 +357,25 @@ int main() {
                                     cout << "Deposit complete.\n";
                                 }
                             }
-                        }else if(y == 4){
+                        }
+                        else if(y == 4){
+                            vector<float> accounts = get_user_accounts(userid);
+                            cout << "Which account would you like to withdraw money from?" << endl;
+                            int acc;
+                            cin >> acc;
+                            if(acc-1 >= accounts.size()){
+                                cout << "Invalid account index.\n";
+                            }else{
+                                cout << "How much are you withdrawing? " << endl;
+                                float amt;
+                                cin >> amt;
+                                if(amt > 0 && accounts[acc-1] > amt){
+                                    accounts[acc-1] -= amt;
+                                    update_user_accounts(userid, accounts);
+                                    cout << "Withdrawal complete.\n";
+                                }
+                            }
+                        }else if(y == 5){
                             cout << "Logging out..." << endl;
                             loggedin = false;
                         }else{
