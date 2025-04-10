@@ -91,7 +91,7 @@ int validatelogin(const string& username, const string& password){
         }
     }
     //return user id, -1 if incorrect login details
-    return 1;
+    return -1;
 }
 vector<float> get_user_accounts(int user_id){
     vector<float> accounts;
@@ -123,12 +123,69 @@ void displaydashboard(int user_id){
 
     cout << "=========================" << endl << endl;
 }
+
+void update_user_accounts(int user_id, const vector<float>& updatedAccounts)
+{
+    string filename = "user_data/" + to_string(user_id) + ".dat";
+    ifstream infile(filename);
+    vector<string> lines;
+    string line;
+
+    while (getline(infile, line)) {
+        lines.push_back(line);
+    }
+    infile.close();
+
+    int balanceStart = 2;
+
+    while (balanceStart < lines.size()) 
+    {
+        stof(lines[balanceStart]);
+        lines.erase(lines.begin() + balanceStart);
+    }
+
+    for (int i = 0; i < updatedAccounts.size(); ++i) {
+        ostringstream ss;
+        ss << fixed << setprecision(2) << updatedAccounts[i];
+        lines.insert(lines.begin() + balanceStart + i, ss.str());
+    }
+
+    ofstream outfile(filename);
+    for (const auto& l : lines) {
+        outfile << l << '\n';
+    }
+    outfile.close();
+}
+
+void transferFunds(int user_id, int accountToWithdrawFrom, int accountToDepositTo, float amount)
+{
+    vector<float> accounts = get_user_accounts(user_id);
+
+    if (accountToWithdrawFrom-1 >= accounts.size() || accountToDepositTo-1 >= accounts.size()) {
+        cout << "Invalid account index.\n";
+        return;
+    }
+    if (accounts[accountToWithdrawFrom-1] < amount) {
+        cout << "Insufficient funds.\n";
+        return;
+    }
+
+    accounts[accountToWithdrawFrom-1] -= amount;
+    accounts[accountToDepositTo-1] += amount;
+
+    update_user_accounts(user_id, accounts);
+
+    cout << "Transfer complete.\n";
+}
+
 int main() {
     while(1){
         cout << "Please select an option:" << endl;
         cout << "1 - Create Account" << endl;
         cout << "2 - Login" << endl;
-        cout << "3 - Exit" << endl;
+        cout << "3 - Move Money between accounts" << endl;
+        cout << "4 - Exit" << endl;
+
 
         int x;
         cin >> x;
@@ -182,15 +239,65 @@ int main() {
                 }else{
                     successfullogin = true;
                 }
-                //successfullogin = true;
-                cout << username << " : " << password << endl;
-                cout << "Successfully logged in!" << endl;
-                //do logic to go to main dashboard
-                displaydashboard(userid);
+
+                if(successfullogin)
+                {
+                     //successfullogin = true;
+                    cout << username << " : " << password << endl;
+                    cout << "Successfully logged in!" << endl;
+                    //do logic to go to main dashboard
+                    displaydashboard(userid);
+                }
+            }
+        }
+        else if(x == 3)
+        {
+            bool successfullogin = false;
+            while(successfullogin == false){
+                cout << "Please enter a new username:";
+                bool usernamealreadyexists = false;
+                string username;
+                cin >> username;
+                cout << "Please enter a password:";
+                string password;
+                cin >> password;
+                //do logic check to see if login is correct
+                int userid = validatelogin(username, password);
+                if(userid == -1){
+                    cout << "Invalid username or password, try again" << endl;
+                    successfullogin = false;
+                }else{
+                    successfullogin = true;
+                }
+
+                if(successfullogin)
+                {
+
+                    int account1, account2;
+                    float amount;
+                     //successfullogin = true;
+                    cout << username << " : " << password << endl;
+                    cout << "Successfully logged in!" << endl;
+                    //do logic to go to main dashboard
+                    displaydashboard(userid);
+                    vector<float> accounts = get_user_accounts(userid);
+
+                    cout << "Account to take money from: ";
+                    cin >> account1;
+
+                    cout << "Account to add money to: ";
+                    cin >> account2;
+
+                    cout << "How much money do you want to move: ";
+                    cin >> amount;
+
+                    transferFunds(userid, account1, account2, amount);
+                }
+
 
             }
         }
-        else if(x == 3){
+        else if(x == 4){
             cout << "Exiting.." << endl;
             return 0;
         }else{
