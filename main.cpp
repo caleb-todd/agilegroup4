@@ -222,7 +222,7 @@ int main() {
         cout << "Please select an option:" << endl;
         cout << "1 - Create Account" << endl;
         cout << "2 - Login" << endl;
-        cout << "3 - Move Money between accounts" << endl;
+        //cout << "3 - Move Money between accounts" << endl;
         cout << "4 - Exit" << endl;
         cout << "5 - Calculate Interest Profit" << endl;
 
@@ -283,58 +283,90 @@ int main() {
                 if(successfullogin)
                 {
                      //successfullogin = true;
-                    cout << username << " : " << password << endl;
+                    //cout << username << " : " << password << endl;
                     cout << "Successfully logged in!" << endl;
                     //do logic to go to main dashboard
-                    displaydashboard(userid);
+                    bool loggedin = true;
+                    while(loggedin == true){
+                        displaydashboard(userid);
+                        int y;
+                        cout << "Options:" << endl;
+                        cout << "1 - Transfer funds" << endl;
+                        cout << "2 - Create new checking account" << endl;
+                        cout << "3 - Deposit money" << endl;
+                        cout << "4 - Logout" << endl;
+                        cin >> y;
+                        if(y == 1){
+                            int account1, account2;
+                            float amount;
+                            //successfullogin = true;
+                            //cout << username << " : " << password << endl;
+                            //cout << "Successfully logged in!" << endl;
+                            //do logic to go to main dashboard
+                            displaydashboard(userid);
+                            vector<float> accounts = get_user_accounts(userid);
+
+                            cout << "Account to take money from: ";
+                            cin >> account1;
+
+                            cout << "Account to add money to: ";
+                            cin >> account2;
+
+                            cout << "How much money do you want to move: ";
+                            cin >> amount;
+
+                            transferFunds(userid, account1, account2, amount);
+                        }else if(y == 2){
+                            cout << "Are you sure you want to create a new account? (y/n)" << endl;
+                            char c;
+                            cin >> c;
+                            if(c == 'y'){
+                                ifstream file("user_data/" + to_string(userid) + ".dat");
+                                vector<string> lines;
+                                string line;
+                                while(getline(file, line)){
+                                    lines.push_back(line);
+                                }
+                                file.close();
+
+                                ofstream overwritefile("user_data/" + to_string(userid) + ".dat");
+
+                                for(const auto& existing_lines : lines){
+                                    overwritefile << existing_lines << "\n";
+                                }
+                                overwritefile << "0.0\n";
+                                overwritefile.close();
+                                cout << "Account successfully created!" << endl;
+                            }else{
+
+                            }
+                            
+                        }else if(y == 3){
+                            vector<float> accounts = get_user_accounts(userid);
+                            cout << "Which account would you like to deposit money to?" << endl;
+                            int acc;
+                            cin >> acc;
+                            if(acc-1 >= accounts.size()){
+                                cout << "Invalid account index.\n";
+                            }else{
+                                cout << "How much are you depositing?" << endl;
+                                float amt;
+                                cin >> amt;
+                                if(amt > 0){
+                                    accounts[acc-1] += amt;
+                                    update_user_accounts(userid, accounts);
+                                    cout << "Deposit complete.\n";
+                                }
+                            }
+                        }else if(y == 4){
+                            cout << "Logging out..." << endl;
+                            loggedin = false;
+                        }else{
+                            cout << "Invalid option, try again" << endl;
+                        }
+                    }
+                    
                 }
-            }
-        }
-        else if(x == 3)
-        {
-            bool successfullogin = false;
-            while(successfullogin == false){
-                cout << "Please enter a new username:";
-                bool usernamealreadyexists = false;
-                string username;
-                cin >> username;
-                cout << "Please enter a password:";
-                string password;
-                cin >> password;
-                //do logic check to see if login is correct
-                int userid = validatelogin(username, password);
-                if(userid == -1){
-                    cout << "Invalid username or password, try again" << endl;
-                    successfullogin = false;
-                }else{
-                    successfullogin = true;
-                }
-
-                if(successfullogin)
-                {
-
-                    int account1, account2;
-                    float amount;
-                     //successfullogin = true;
-                    cout << username << " : " << password << endl;
-                    cout << "Successfully logged in!" << endl;
-                    //do logic to go to main dashboard
-                    displaydashboard(userid);
-                    vector<float> accounts = get_user_accounts(userid);
-
-                    cout << "Account to take money from: ";
-                    cin >> account1;
-
-                    cout << "Account to add money to: ";
-                    cin >> account2;
-
-                    cout << "How much money do you want to move: ";
-                    cin >> amount;
-
-                    transferFunds(userid, account1, account2, amount);
-                }
-
-
             }
         }
         else if(x == 4){
